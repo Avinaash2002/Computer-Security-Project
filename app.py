@@ -38,9 +38,9 @@ app.secret_key = "tms4853_computer_security_secureauth_2026"
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'naash2024@gmail.com'          # <-- CHANGE THIS
-app.config['MAIL_PASSWORD'] = 'mkkv xxer jnmj sing'        # <-- CHANGE THIS
-app.config['MAIL_DEFAULT_SENDER'] = ('SecureAuth MFA', 'naash2024@gmail.com')  # <-- CHANGE THIS
+app.config['MAIL_USERNAME'] = 'naash2024@gmail.com'          
+app.config['MAIL_PASSWORD'] = 'mkkv xxer jnmj sing'        
+app.config['MAIL_DEFAULT_SENDER'] = ('SecureAuth MFA', 'naash2024@gmail.com')  
 
 mail = Mail(app)
 
