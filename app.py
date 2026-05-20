@@ -1,17 +1,47 @@
-"""
-app.py — SecureAuth: AI/ML-Enhanced Multi-Factor Authentication System
-TMS4853 Computer Security — Password Guessing Attack Mitigation
-
-Improvements over the sample code:
-  1. ✅ Real ML model (Random Forest) replacing rule-based engine
-  2. ✅ Trained Decision Tree & Random Forest classifiers
-  3. ✅ CAPTCHA after repeated failed attempts
-  4. ✅ Hashed passwords (SHA-256) instead of plaintext
-  5. ✅ Real email OTP delivery via Flask-Mail (SMTP)
-  6. ✅ IP address tracking and risk assessment
-  7. ✅ Behavioral biometrics (typing speed analysis)
-  8. ✅ Unusual time toggle for demo/testing
-"""
+'''/******************************************************************************
+* FILE      : app.py
+* Name      : Avinaash Loganathan
+* Matric    : 83321
+* Due Date  : 25 May 2026
+* Project   : TMS4853 Computer Security
+*
+* How to execute:
+*   1. Open terminal / command prompt
+*   2. Navigate to the project directory where app.py is saved
+*   3. Install required libraries:
+*        pip install flask flask-mail numpy scikit-learn
+*   4. Train the ML model:
+*        python train_model.py
+*   5. Run the application:
+*        python app.py
+*   6. Open browser:
+*        http://127.0.0.1:5000
+*
+* DESCRIPTION:
+*  SecureAuth is an AI/ML-enhanced multi-factor authentication system
+*  developed to mitigate password guessing attacks and improve login security.
+*
+*  The system integrates:
+*     - Random Forest machine learning risk analysis
+*     - Decision Tree / ML-based login classification
+*     - CAPTCHA validation after repeated failed attempts
+*     - SHA-256 password hashing
+*     - Email OTP verification using Flask-Mail SMTP
+*     - IP address monitoring and anomaly detection
+*     - Behavioral biometric analysis using typing speed
+*     - Login audit logging and monitoring dashboard
+*
+*  The application evaluates login behaviour and dynamically determines
+*  whether a login attempt is low, medium, or high risk before granting access.
+*
+* Output:
+*   - Web-based secure login authentication system
+*   - OTP verification page
+*   - Login audit dashboard
+*   - JSON log files for user activity tracking
+*
+* LAST REVISED: 20/05/26
+******************************************************************************/'''
 
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_mail import Mail, Message
@@ -27,115 +57,152 @@ from datetime import datetime
 app = Flask(__name__)
 app.secret_key = "tms4853_computer_security_secureauth_2026"
 
-# ============================================================
-# EMAIL CONFIGURATION (Gmail SMTP)
-# ============================================================
-# To use Gmail:
-# 1. Enable 2-Step Verification at https://myaccount.google.com/security
-# 2. Generate App Password at https://myaccount.google.com/apppasswords
-# 3. Replace the values below
-# ============================================================
+
+# EMAIL CONFIGURATION 
+# Users must enable 2FA and generate an App Password
+
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'naash2024@gmail.com'          
-app.config['MAIL_PASSWORD'] = 'mkkv xxer jnmj sing'        
-app.config['MAIL_DEFAULT_SENDER'] = ('SecureAuth MFA', 'naash2024@gmail.com')  
+app.config['MAIL_USERNAME'] = 'naash2024@gmail.com'
+app.config['MAIL_PASSWORD'] = 'mkkv xxer jnmj sing'
+app.config['MAIL_DEFAULT_SENDER'] = ('SecureAuth MFA', 'naash2024@gmail.com')
 
 mail = Mail(app)
 
-# ============================================================
 # FILE PATHS & CONSTANTS
-# ============================================================
-# Use absolute paths so it works on PythonAnywhere (WSGI runs from different directory)
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 USERS_FILE = os.path.join(BASE_DIR, "users.json")
 OTP_FILE = os.path.join(BASE_DIR, "otp_store.json")
 LOGIN_LOG_FILE = os.path.join(BASE_DIR, "login_log.json")
 ML_MODEL_PATH = os.path.join(BASE_DIR, "ml_model", "risk_model.pkl")
 
+# Maximum failed attempts before temporary blocking
 BLOCK_THRESHOLD = 5
-BLOCK_DURATION = 60    # seconds
-OTP_EXPIRY = 300       # 5 minutes
-CAPTCHA_THRESHOLD = 2  # show CAPTCHA after this many failed attempts
 
-# In-memory trackers
+# Temporary block duration in seconds
+BLOCK_DURATION = 60
+
+# OTP validity duration
+OTP_EXPIRY = 300
+
+# CAPTCHA appears after this number of failed attempts
+CAPTCHA_THRESHOLD = 2
+
+# Stores temporary runtime session-related data
+
 login_tracker = {}
-known_ips = {}            # username -> set of known IPs
-typing_profiles = {}      # username -> list of typing speeds (chars/sec)
-force_unusual_hour = {}   # session override for demo toggle
 
-# ============================================================
-# LOAD ML MODEL
-# ============================================================
+# Stores known IP addresses per user
+known_ips = {}
+
+# Stores typing speed history for behavioral analysis
+typing_profiles = {}
+
+# Used to simulate unusual login hours during demo/testing
+force_unusual_hour = {}
+
+# Loads the trained Random Forest classifier model
+
 ml_model = None
 
 def load_ml_model():
     global ml_model
+
+    # Check whether trained model exists
     if os.path.exists(ML_MODEL_PATH):
+
+        # Load serialized ML model
         with open(ML_MODEL_PATH, "rb") as f:
             ml_model = pickle.load(f)
+
         print(f"[ML] Random Forest model loaded from {ML_MODEL_PATH}")
+
     else:
+        # Fallback to rule-based system if model unavailable
         print(f"[ML] No model found at {ML_MODEL_PATH}. Run 'python train_model.py' first.")
         print(f"[ML] Falling back to rule-based engine.")
 
-
-# ============================================================
 # UTILITY FUNCTIONS
-# ============================================================
+
 def load_json(filepath):
+
+    # Read JSON file if it exists
     if os.path.exists(filepath):
         with open(filepath, "r") as f:
             return json.load(f)
+
     return {}
 
 def save_json(filepath, data):
+
+    # Save Python dictionary into JSON file
     with open(filepath, "w") as f:
         json.dump(data, f, indent=4)
 
 def hash_password(password):
-    """Hash password using SHA-256."""
+
+    # Convert plaintext password into SHA-256 hash
     return hashlib.sha256(password.encode()).hexdigest()
 
 def load_users():
+
+    # Load registered users database
     return load_json(USERS_FILE)
 
 def save_users(data):
+
+    # Save updated user information
     save_json(USERS_FILE, data)
 
 def load_otp_store():
+
+    # Load OTP storage file
     return load_json(OTP_FILE)
 
 def save_otp_store(data):
+
+    # Save generated OTP codes
     save_json(OTP_FILE, data)
 
 def load_login_log():
+
+    # Load login audit log
     if os.path.exists(LOGIN_LOG_FILE):
         with open(LOGIN_LOG_FILE, "r") as f:
             return json.load(f)
+
     return []
 
 def save_login_log(log):
+
+    # Save login activity into audit log
     with open(LOGIN_LOG_FILE, "w") as f:
         json.dump(log, f, indent=4)
 
 def generate_otp():
+
+    # Generate random 6-digit OTP
     return str(random.randint(100000, 999999))
 
 def generate_captcha():
-    """Generate a simple math CAPTCHA."""
+
+    # Generate simple arithmetic CAPTCHA challenge
     a = random.randint(2, 15)
     b = random.randint(1, 10)
+
+    # Randomly choose mathematical operation
     ops = [('+', a + b), ('-', a - b), ('×', a * b)]
+
     op_symbol, answer = random.choice(ops)
+
     question = f"{a} {op_symbol} {b}"
+
     return question, str(answer)
 
-
-# ============================================================
 # IP ADDRESS TRACKING
-# ============================================================
+
 def get_client_ip():
     """Get real client IP, accounting for proxies."""
     if request.headers.get('X-Forwarded-For'):
@@ -157,10 +224,8 @@ def register_ip(username, ip_address):
         known_ips[username] = set()
     known_ips[username].add(ip_address)
 
-
-# ============================================================
 # BEHAVIORAL BIOMETRICS — Typing Speed Analysis
-# ============================================================
+
 def analyze_typing_speed(username, typing_speed):
     """
     Compare current typing speed against user's historical profile.
@@ -196,10 +261,8 @@ def update_typing_profile(username, typing_speed):
         # Keep last 20 samples
         typing_profiles[username] = typing_profiles[username][-20:]
 
-
-# ============================================================
 # UNUSUAL HOUR CHECK (with demo toggle support)
-# ============================================================
+
 def is_unusual_hour(session_id=None):
     """
     Check if current hour is unusual (12AM-5AM).
@@ -212,10 +275,8 @@ def is_unusual_hour(session_id=None):
     hour = datetime.now().hour
     return 1 if hour < 5 else 0
 
-
-# ============================================================
 # FEATURE EXTRACTION
-# ============================================================
+
 def initialize_user_tracker(username):
     if username not in login_tracker:
         login_tracker[username] = {
@@ -225,18 +286,18 @@ def initialize_user_tracker(username):
         }
 
 def extract_features(username, device_id, password_correct, ip_address, typing_speed):
-    """
-    Extract 7 login behavior features for the ML risk engine.
+    
+    #Extract 7 login behavior features for the ML risk engine.
 
-    Features:
-      1. failed_attempts       — consecutive failed logins
-      2. short_interval        — 1 if < 5 seconds since last attempt
-      3. unknown_device        — 1 if device not recognized
-      4. unusual_hour          — 1 if 12AM-5AM (or demo toggle)
-      5. password_match        — 1 if password correct
-      6. ip_risk               — 1 if IP is new for this user
-      7. typing_speed_anomaly  — 1 if typing speed deviates from profile
-    """
+    #Features:
+      #1. failed_attempts       — consecutive failed logins
+      #2. short_interval        — 1 if < 5 seconds since last attempt
+      #3. unknown_device        — 1 if device not recognized
+      #4. unusual_hour          — 1 if 12AM-5AM (or demo toggle)
+      #5. password_match        — 1 if password correct
+      #6. ip_risk               — 1 if IP is new for this user
+      #7. typing_speed_anomaly  — 1 if typing speed deviates from profile
+    
     initialize_user_tracker(username)
     tracker = login_tracker[username]
     current_time = time.time()
@@ -266,10 +327,8 @@ def extract_features(username, device_id, password_correct, ip_address, typing_s
     tracker["last_attempt_time"] = current_time
     return features
 
+# RISK ENGINE — ML Model and Fallback Rule-Based (in-case)
 
-# ============================================================
-# RISK ENGINE — ML Model + Fallback Rule-Based
-# ============================================================
 def ml_risk_engine(features):
     """
     Use trained Random Forest model to predict risk level.
@@ -330,9 +389,8 @@ def fallback_rule_engine(features):
         return "low", score, 100.0, "Rule-Based Engine (fallback)"
 
 
-# ============================================================
 # EMAIL OTP DELIVERY
-# ============================================================
+
 def send_otp_email(recipient_email, otp_code, username):
     """Send OTP via real email using Flask-Mail / Gmail SMTP."""
     try:
@@ -365,10 +423,8 @@ def send_otp_email(recipient_email, otp_code, username):
         print(f"[EMAIL ERROR] Failed to send OTP to {recipient_email}: {e}")
         return False
 
-
-# ============================================================
 # AUDIT LOG
-# ============================================================
+
 def log_login_attempt(username, risk_level, risk_score, features, success, ip_address, engine_type, confidence):
     log = load_login_log()
     log.append({
@@ -385,9 +441,8 @@ def log_login_attempt(username, risk_level, risk_score, features, success, ip_ad
     save_login_log(log)
 
 
-# ============================================================
 # INITIALIZE DEFAULT USERS
-# ============================================================
+
 def init_users():
     if not os.path.exists(USERS_FILE):
         users = {
@@ -405,10 +460,7 @@ def init_users():
         save_users(users)
         print("[INIT] Created users.json with default users (hashed passwords)")
 
-
-# ============================================================
 # ROUTES
-# ============================================================
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -635,10 +687,7 @@ def dashboard():
     logs.reverse()
     return render_template("dashboard.html", logs=logs[:50])
 
-
-# ============================================================
 # MAIN
-# ============================================================
 if __name__ == "__main__":
     init_users()
     load_ml_model()
