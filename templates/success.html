@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureAuth — Access Granted</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="success-page">
+    <div class="bg-grid"></div>
+    <div class="bg-glow glow-green-1"></div>
+    <div class="bg-glow glow-green-2"></div>
+
+    <div class="center-card success-card">
+        <div class="card-inner">
+            <div class="success-icon-wrap">
+                <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                    <circle cx="32" cy="32" r="28" stroke="#22c55e" stroke-width="2" opacity="0.2"/>
+                    <circle cx="32" cy="32" r="20" stroke="#22c55e" stroke-width="2.5" fill="none" class="check-circle"/>
+                    <path d="M22 32l7 7 13-13" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="check-mark"/>
+                </svg>
+                <div class="success-pulse"></div>
+            </div>
+
+            <h2 class="card-title" style="color:#86efac;">Authentication Successful</h2>
+            <p class="card-desc">Welcome back, <strong>{{ username }}</strong>. Verified via Password + Email OTP multi-factor authentication.</p>
+
+            <div class="security-summary">
+                <h3 class="summary-title">Security Analysis Report</h3>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <div class="summary-label">Risk Level</div>
+                        <div class="risk-pill-sm risk-{{ risk_level }}">{{ risk_level|upper }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Risk Score</div>
+                        <div class="summary-value summary-mono">{{ risk_score }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">ML Engine</div>
+                        <div class="summary-value" style="font-size:12px;">{{ engine_type }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Confidence</div>
+                        <div class="summary-value summary-mono">{{ confidence }}%</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">IP Address</div>
+                        <div class="summary-value summary-mono">{{ ip_address }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Timestamp</div>
+                        <div class="summary-value summary-mono" id="ts"></div>
+                    </div>
+                </div>
+
+                {% if features %}
+                <div class="features-breakdown">
+                    <h4 class="features-title">7 Feature Analysis (ML Input Vector)</h4>
+                    <div class="features-grid">
+                        <div class="feature-cell {% if features.failed_attempts >= 3 %}cell-danger{% else %}cell-safe{% endif %}">
+                            <div class="cell-value">{{ features.failed_attempts }}</div>
+                            <div class="cell-label">Failed Attempts</div>
+                        </div>
+                        <div class="feature-cell {% if features.short_interval %}cell-danger{% else %}cell-safe{% endif %}">
+                            <div class="cell-value">{% if features.short_interval %}Yes{% else %}No{% endif %}</div>
+                            <div class="cell-label">Rapid Attempts</div>
+                        </div>
+                        <div class="feature-cell {% if features.unknown_device %}cell-warn{% else %}cell-safe{% endif %}">
+                            <div class="cell-value">{% if features.unknown_device %}Yes{% else %}No{% endif %}</div>
+                            <div class="cell-label">Unknown Device</div>
+                        </div>
+                        <div class="feature-cell {% if features.unusual_hour %}cell-warn{% else %}cell-safe{% endif %}">
+                            <div class="cell-value">{% if features.unusual_hour %}Yes{% else %}No{% endif %}</div>
+                            <div class="cell-label">Unusual Hour</div>
+                        </div>
+                        <div class="feature-cell {% if features.ip_risk %}cell-warn{% else %}cell-safe{% endif %}">
+                            <div class="cell-value">{% if features.ip_risk %}Yes{% else %}No{% endif %}</div>
+                            <div class="cell-label">New IP Address</div>
+                        </div>
+                        <div class="feature-cell {% if features.typing_speed_anomaly %}cell-danger{% else %}cell-safe{% endif %}">
+                            <div class="cell-value">{% if features.typing_speed_anomaly %}Yes{% else %}No{% endif %}</div>
+                            <div class="cell-label">Typing Anomaly</div>
+                        </div>
+                        <div class="feature-cell cell-safe" style="grid-column: span 2;">
+                            <div class="cell-value">✓</div>
+                            <div class="cell-label">Password Match</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="success-actions">
+                <a href="/dashboard" class="btn-primary">
+                    <span>View Audit Log</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </a>
+                <a href="/logout" class="btn-secondary"><span>Logout</span></a>
+            </div>
+        </div>
+    </div>
+
+    <script>document.getElementById('ts').textContent = new Date().toLocaleString();</script>
+</body>
+</html>

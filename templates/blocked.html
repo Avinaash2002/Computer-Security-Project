@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureAuth — Access Blocked</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="blocked-page">
+    <div class="bg-grid"></div>
+    <div class="bg-glow glow-red-1"></div>
+    <div class="bg-glow glow-red-2"></div>
+
+    <div class="center-card blocked-card">
+        <div class="card-inner">
+            <div class="blocked-icon-wrap">
+                <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                    <circle cx="32" cy="32" r="28" stroke="#ef4444" stroke-width="2.5" opacity="0.2"/>
+                    <circle cx="32" cy="32" r="20" stroke="#ef4444" stroke-width="2.5" fill="none"/>
+                    <line x1="18" y1="18" x2="46" y2="46" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+                <div class="blocked-pulse"></div>
+            </div>
+
+            <h2 class="card-title" style="color:#fca5a5;">Access Temporarily Blocked</h2>
+            <p class="card-desc">Our AI threat detection system identified your login as <strong style="color:#f87171;">HIGH RISK</strong>. Access has been temporarily suspended to mitigate potential password guessing attacks.</p>
+
+            <div class="block-reasons">
+                <div class="reason-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span>Multiple failed login attempts detected</span>
+                </div>
+                <div class="reason-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span>Suspicious behavior pattern flagged by ML classifier</span>
+                </div>
+            </div>
+
+            <div class="countdown-box">
+                <div class="countdown-label">Try again in</div>
+                <div class="countdown-timer" id="blockTimer">{{ remaining }}</div>
+                <div class="countdown-unit">seconds</div>
+                <div class="countdown-bar"><div class="countdown-progress" id="progressBar"></div></div>
+            </div>
+
+            <a href="/" class="btn-secondary" id="retryBtn" style="pointer-events:none;opacity:0.4;"><span>Return to Login</span></a>
+
+            <p class="block-note">This temporary block is a mitigation response against brute-force, dictionary, and credential stuffing attacks. It limits the attacker's effective guess budget as recommended by NIST guidelines.</p>
+        </div>
+    </div>
+
+    <script>
+        let remaining = {{ remaining }};
+        const total = remaining;
+        const timerEl = document.getElementById('blockTimer');
+        const bar = document.getElementById('progressBar');
+        const btn = document.getElementById('retryBtn');
+        bar.style.width = '100%';
+        setInterval(() => {
+            remaining--;
+            timerEl.textContent = Math.max(remaining, 0);
+            bar.style.width = ((remaining / total) * 100) + '%';
+            if (remaining <= 0) { btn.style.pointerEvents = 'auto'; btn.style.opacity = '1'; }
+        }, 1000);
+    </script>
+</body>
+</html>

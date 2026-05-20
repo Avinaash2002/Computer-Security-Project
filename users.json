@@ -1,0 +1,12 @@
+{
+    "student1": {
+        "password_hash": "73e87ed2b16a0b9ae8096fc0347b368e9c62a69799bdc2a91a3b1cf474b01418",
+        "email": "naash2024@gmail.com",
+        "known_device": "laptop-01"
+    },
+    "student2": {
+        "password_hash": "2afb97889c69dd938d0b4800d66b000a7a8edad6240aa11f6580f44ff59d0b1a",
+        "email": "naash2024@gmail.com",
+        "known_device": "phone-02"
+    }
+}

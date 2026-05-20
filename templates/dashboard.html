@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureAuth — Audit Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="dashboard-page">
+    <div class="bg-grid"></div>
+
+    <div class="dashboard-container">
+        <div class="dash-header">
+            <div>
+                <h1 class="dash-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Login Audit Log
+                </h1>
+                <p class="dash-subtitle">Real-time monitoring — IP tracking, ML risk analysis, behavioral biometrics</p>
+            </div>
+            <a href="/" class="btn-secondary btn-sm">← Back to Login</a>
+        </div>
+
+        {% if logs %}
+        <div class="table-wrap">
+            <table class="audit-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>IP Address</th>
+                        <th>Risk</th>
+                        <th>Score</th>
+                        <th>Engine</th>
+                        <th>Conf.</th>
+                        <th>Failed</th>
+                        <th>Rapid</th>
+                        <th>Unk.Dev</th>
+                        <th>Unus.Hr</th>
+                        <th>New IP</th>
+                        <th>Typing</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr class="row-{{ log.risk_level }}">
+                        <td class="cell-mono">{{ log.timestamp }}</td>
+                        <td><strong>{{ log.username }}</strong></td>
+                        <td class="cell-mono">{{ log.ip_address }}</td>
+                        <td><span class="table-badge badge-{{ log.risk_level }}">{{ log.risk_level|upper }}</span></td>
+                        <td class="cell-mono">{{ log.risk_score }}</td>
+                        <td class="cell-small">{{ log.engine_type[:12] }}</td>
+                        <td class="cell-mono">{{ log.confidence }}%</td>
+                        <td class="cell-center">{{ log.features.failed_attempts }}</td>
+                        <td class="cell-center">{% if log.features.short_interval %}<span class="dot-red">●</span>{% else %}<span class="dot-green">●</span>{% endif %}</td>
+                        <td class="cell-center">{% if log.features.unknown_device %}<span class="dot-amber">●</span>{% else %}<span class="dot-green">●</span>{% endif %}</td>
+                        <td class="cell-center">{% if log.features.unusual_hour %}<span class="dot-amber">●</span>{% else %}<span class="dot-green">●</span>{% endif %}</td>
+                        <td class="cell-center">{% if log.features.ip_risk %}<span class="dot-amber">●</span>{% else %}<span class="dot-green">●</span>{% endif %}</td>
+                        <td class="cell-center">{% if log.features.typing_speed_anomaly %}<span class="dot-red">●</span>{% else %}<span class="dot-green">●</span>{% endif %}</td>
+                        <td>
+                            {% if log.success == true %}<span class="table-badge badge-success">✓ Granted</span>
+                            {% elif log.success == 'pending_otp' %}<span class="table-badge badge-pending">⧗ OTP Sent</span>
+                            {% else %}<span class="table-badge badge-denied">✕ Denied</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <p>No login attempts recorded yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
