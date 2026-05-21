@@ -162,7 +162,7 @@ project/
 
 ---
 
-## Connection to Literature Review
+## Connection to Assignment 1 
 
 This implementation directly addresses findings from the reviewed papers:
 
