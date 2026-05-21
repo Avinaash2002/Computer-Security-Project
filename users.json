@@ -8,5 +8,20 @@
         "password_hash": "2afb97889c69dd938d0b4800d66b000a7a8edad6240aa11f6580f44ff59d0b1a",
         "email": "naash2024@gmail.com",
         "known_device": "phone-02"
+    },
+    "joanna": {
+        "password_hash": "751a3b9ad40f15cc26c09d8b1ee226df91a3210e26de14732aaefc2afabba6f0",
+        "email": "jorisejoanna@gmail.com",
+        "known_device": "laptop-03"
+    },
+    "hazim": {
+        "password_hash": "49b88d854db312d8ade27c6c857b9b634b35345f2a4cdbe68585dc4cb870f7fa",
+        "email": "hazimiqmal59@gmail.com",
+        "known_device": "laptop-04"
+    },
+    "dannie": {
+        "password_hash": "1923665ee6253a3cc70b665c8c895113747786b2a27a75d7524b09aff0db81f0",
+        "email": "dannieujang16@gmail.com",
+        "known_device": "laptop-05"
     }
 }
